@@ -1,5 +1,3 @@
-import asyncio
-
 import vtkmodules.vtkRenderingOpenGL2  # noqa
 
 # -----------------------------------------------------------------------------
@@ -50,7 +48,7 @@ state, ctrl = server.state, server.controller
 ctrl.on_server_ready.add(lambda **_: print("Cone Ready", flush=True))
 
 # Release resources right away
-ctrl.on_client_exited.add(lambda **_: asyncio.create_task(server.stop()))
+ctrl.on_client_exited.add(lambda **_: print("client disconnected", flush=True))
 
 
 def reset_resolution():
@@ -108,4 +106,6 @@ with layout:
 # -----------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    server.start()
+    server.start(
+        timeout=20
+    )  # 20 seconds timeout for the client to connect and after disconnect
