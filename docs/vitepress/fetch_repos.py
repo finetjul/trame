@@ -36,8 +36,8 @@ import json
 import re
 from datetime import datetime, timedelta, timezone
 import requests
-import warnings
 import time
+import warnings
 import yaml
 from pathlib import Path
 
@@ -45,6 +45,16 @@ EXTERNAL_REPOS_FILE = "external_repos.yml"
 OUTPUT_FILE = "repos.json"
 IMAGES_DOWNLOAD_DIR = Path("public/repos_images")
 IMAGES_SERVE_SUFFIX = "/trame/repos_images"
+
+
+def github_action_formatwarning(message, category, filename, lineno, line=None):
+    # Escape any colons or commas in the message
+    safe_message = str(message).replace(":", "%3A").replace(",", "%2C")
+
+    return f"::warning file={filename},line={lineno},title={category.__name__}::{safe_message}\n"
+
+
+warnings.formatwarning = github_action_formatwarning
 
 
 class ImageCacheMaker:
@@ -159,7 +169,7 @@ def retrieve_multiple_repos_graphql(repos: dict):
                 openGraphImageUrl
                 createdAt
                 stargazerCount
-                repositoryTopics(first: 10) {{
+                repositoryTopics(first: 100) {{
                     nodes {{
                         topic {{
                             name
@@ -190,8 +200,15 @@ def retrieve_multiple_repos_graphql(repos: dict):
     """.strip()
     mini_query = minify_graphql(query)
     cmd = ["gh", "api", "graphql", "-f", f"query={mini_query}"]
-    data = json.loads(make_gh_request(cmd))["data"]
-    return data
+    try:
+        data = json.loads(make_gh_request(cmd))["data"]
+    except Exception as e:
+        warnings.warn(f"GraphQL request failed: {e}")
+        return {}
+    missing = [alias for alias, info in data.items() if info is None]
+    for alias in missing:
+        warnings.warn(f"Skipping missing repo: {alias} (not found on GitHub)")
+    return {alias: info for alias, info in data.items() if info is not None}
 
 
 def is_gh_url(url):
@@ -241,8 +258,8 @@ def fetch_gh_info(gh_repos):
             fetched_repos_info[url] = json_repos_info[url] | repo_info
         else:
             warnings.warn(
-                f"The fetched github repository has a different URL than the one provided. "
-                f"Check that the repository URL in `extrernal_repos.yml` isn't an alias: {url}."
+                f"The fetched github repository has a different URL than the one provided. Check "
+                f"that the repository URL in `extrernal_repos.yml` isn't an alias: {url}."
             )
     return fetched_repos_info
 
