@@ -1,3 +1,8 @@
+## August 25, 2026
+
+Discover new community projects, [reusable components](https://kitware.github.io/trame/guide/intro/widgets.html), and [real-world applications](https://kitware.github.io/trame/guide/intro/applications.html) built with trame. Catalogs are dynamically updated daily.
+![Widgets and Applications catalogs](/assets/images/news/catalogs.jpg)
+
 ## June 11, 2026
 
 [trame-radial-menu](https://github.com/Kitware/trame-radial-menu/) is a new trame widget that can spawn
